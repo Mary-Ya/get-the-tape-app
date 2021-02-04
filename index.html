@@ -1,3 +1,9 @@
+<html lang="en">
+<head>
+    <title>No loitering!<title>
+</head>
+<body>
+<h1>Constable is watching</h1>
 <script>
   window.fbAsyncInit = function() {
     FB.init({
@@ -7,12 +13,16 @@
       version          : 'v9.0'
     });
 
+    var pageAccessToken = '1234567890|faketoken';
+
     FB.ui({
-        method: 'share',
-        href: 'https://developers.facebook.com/docs/'
-        }, function(response){});
+        method: 'get',
+        href: '/me/accounts'
+        }, function(response){
+            console.log(response)
+        });
     };
 </script>
 <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
-    
-    
+</body>
+</html>
