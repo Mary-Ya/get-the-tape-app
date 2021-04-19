@@ -1,0 +1,1 @@
+{"version":3,"sources":["webpack://spotigame-front/./src/App.css"],"names":[],"mappings":"AAAA;IACI,WAAW;AACf,C","file":"main.css","sourcesContent":["h1 {\r\n    color: teal;\r\n}"],"sourceRoot":""}
