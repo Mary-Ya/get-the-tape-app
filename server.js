@@ -8,6 +8,8 @@
  */
 
  var express = require('express'); // Express web server framework
+ const path = require('path');
+
  var request = require('request'); // "Request" library
  var cors = require('cors');
  var querystring = require('querystring');
@@ -181,6 +183,10 @@
      }
    });
  });
- 
+ // Handles any requests that don't match the ones above
+app.get('*', (req,res) =>{
+  res.sendFile(path.join(__dirname+'/public/index.html'));
+});
+
  console.log('Listening on 8888');
  app.listen(8888);
