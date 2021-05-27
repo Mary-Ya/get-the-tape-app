@@ -131,7 +131,7 @@
           }
         }).done(function(data) {
           access_token = data.access_token;
-          window.spotigame.access_token;
+          window.spspotigameotigame.access_token;
           console.log(data)
           oauthPlaceholder.innerHTML = oauthTemplate({
             access_token: access_token,

@@ -41,17 +41,17 @@
  app.use(express.static(__dirname + '/public'))
     .use(cors())
     .use(cookieParser());
-  var reFetchCounter = 0;
-  var newRequest = false;
+
   function trackRequest (req, res) {
+    var reFetchCounter = 0;
     var access_token = req.query.access_token;
     var {market, offset, q} = req.query;
   
     var reqOptions = {
-       url: `https://api.spotify.com/v1/search?q=${generateRandomString(1)}&type=track&market=${market}&limit=1&offset=${offset}`,
+       url: `https://api.spotify.com/v1/search?q=${q ? q : generateRandomString(1)}&type=track&market=${market}&limit=1&offset=${offset}`,
        headers: { 'Authorization': `Bearer ${access_token}` },
        json: true
-     };
+    };
 
     return request.get(reqOptions, function(error, response, body) {
       console.log('error', error)
@@ -62,6 +62,7 @@
             reFetchCounter++;
             setTimeout(trackRequest, 1000, req, res);
           } else {
+            console.log('YES preview: ' + reFetchCounter);
             reFetchCounter = 0;
             res.send(JSON.stringify(
               response
@@ -98,6 +99,21 @@
      }));
  });
  
+ app.get('/recommendations', function(req, res) {
+   // https://api.spotify.com/v1/recommendations
+   const track = req.query.id ? `&seed_tracks=${req.query.id}` : '';
+   var options = {
+    url: `https://api.spotify.com/v1/recommendations?limit=${req.query.limit || 3}${track}`,
+    headers: { 'Authorization': 'Bearer ' + req.query.access_token },
+    json: true
+  };
+
+  // use the access token to access the Spotify Web API
+  request.get(options, function(error, response, body) {
+    res.send(body);
+  });
+ })
+
  app.get('/callback', function(req, res) {
  
    // your application requests refresh and access tokens
@@ -106,7 +122,7 @@
    var code = req.query.code || null;
    var state = req.query.state || null;
    var storedState = req.cookies ? req.cookies[stateKey] : null;
- 
+  console.log('state: ' + state, ', storedState: ', storedState)
    if (state === null || state !== storedState) {
      res.redirect('/#' +
        querystring.stringify({
@@ -126,7 +142,7 @@
        },
        json: true
      };
- 
+
      request.post(authOptions, function(error, response, body) {
        if (!error && response.statusCode === 200) {
  
@@ -145,7 +161,7 @@
          });
  
          // we can also pass the token to the browser to make requests from there
-         res.redirect('/#' +
+         res.redirect('/home?' +
            querystring.stringify({
              access_token: access_token,
              refresh_token: refresh_token
@@ -161,7 +177,7 @@
  });
  
  app.get('/refresh_token', function(req, res) {
- 
+    console.log('refresh_token', req.query.refresh_token);
    // requesting access token from refresh token
    var refresh_token = req.query.refresh_token;
    var authOptions = {
@@ -177,9 +193,13 @@
    request.post(authOptions, function(error, response, body) {
      if (!error && response.statusCode === 200) {
        var access_token = body.access_token;
+       console.log('success!', access_token)
        res.send({
-         'access_token': access_token
+         'access_token': access_token,
+         'refresh_token': refresh_token
        });
+     } else {
+       console.log('error', body, response.statusCode);
      }
    });
  });
