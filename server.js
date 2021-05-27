@@ -114,6 +114,24 @@
   });
  })
 
+ 
+ app.get('/game', function(req, res) {
+  // https://api.spotify.com/v1/recommendations
+  const genre = req.query.genre ? `&genre=${req.query.genre}` : '';
+  const track = req.query.id ? `&seed_tracks=${req.query.id}` : '';
+  var options = {
+   url: `https://api.spotify.com/v1/recommendations?limit=${req.query.limit || 3}${track}${genre}`,
+   headers: { 'Authorization': 'Bearer ' + req.query.access_token },
+   json: true
+ };
+
+ // use the access token to access the Spotify Web API
+ request.get(options, function(error, response, body) {
+   res.send(body);
+ });
+})
+
+
  app.get('/callback', function(req, res) {
  
    // your application requests refresh and access tokens
