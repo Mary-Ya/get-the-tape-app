@@ -98,37 +98,37 @@
        state: state
      }));
  });
+
+const getRecommendations = (access_token, market, limit = 3, genre, track) => {
+  const trackQuery = track ? `&seed_tracks=${track}` : '';
+  const genreQuery = genre ? `&seed_genres=${genre}` : '';
+
+  return {
+    url: `https://api.spotify.com/v1/recommendations?market=${market}&limit=${limit}${trackQuery}${genreQuery}`,
+    headers: { 'Authorization': 'Bearer ' + access_token },
+    json: true
+  };
+ }
  
  app.get('/recommendations', function(req, res) {
    // https://api.spotify.com/v1/recommendations
-   const track = req.query.id ? `&seed_tracks=${req.query.id}` : '';
-   var options = {
-    url: `https://api.spotify.com/v1/recommendations?limit=${req.query.limit || 3}${track}`,
-    headers: { 'Authorization': 'Bearer ' + req.query.access_token },
-    json: true
-  };
+   var options = getRecommendations(req.query.access_token, req.query.market, req.query.limit, req.query.genre, req.query.id)
 
-  // use the access token to access the Spotify Web API
-  request.get(options, function(error, response, body) {
-    res.send(body);
-  });
+    // use the access token to access the Spotify Web API
+    request.get(options, function(error, response, body) {
+      res.send(body);
+    });
  })
 
  
- app.get('/game', function(req, res) {
-  // https://api.spotify.com/v1/recommendations
-  const genre = req.query.genre ? `&genre=${req.query.genre}` : '';
-  const track = req.query.id ? `&seed_tracks=${req.query.id}` : '';
-  var options = {
-   url: `https://api.spotify.com/v1/recommendations?limit=${req.query.limit || 3}${track}${genre}`,
-   headers: { 'Authorization': 'Bearer ' + req.query.access_token },
-   json: true
- };
+app.get('/get-the-tape', function (req, res) {
+    // https://api.spotify.com/v1/recommendations
+    var listOptions = getRecommendations(req.query.access_token, req.query.market, req.query.limit, req.query.genre)
 
- // use the access token to access the Spotify Web API
- request.get(options, function(error, response, body) {
-   res.send(body);
- });
+    // use the access token to access the Spotify Web API
+    request.get(listOptions, function(error, response, body) {
+      res.send(body);
+    });
 })
 
 
