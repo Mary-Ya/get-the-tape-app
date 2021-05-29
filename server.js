@@ -120,17 +120,48 @@ const getRecommendations = (access_token, market, limit = 3, genre, track) => {
     });
  })
 
+const getTrackById = (tracks, id) => {
+  const index = tracks.map(i => i.id).indexOf(id);
+  return tracks[index];
+ }
  
+const filterTracksByPreviewAndLength = (tracks, limit) => {
+  return tracks.filter(i => i.preview_url && i.preview_url.indexOf('/p.scdn.co/') > -1).slice(0, limit).map(i => {
+    i['answers'] = [];
+    return i;
+  });
+}
+
 app.get('/get-the-tape', function (req, res) {
-    // https://api.spotify.com/v1/recommendations
-    var listOptions = getRecommendations(req.query.access_token, req.query.market, req.query.limit, req.query.genre)
+  // https://api.spotify.com/v1/recommendations
+  const listOptions = getRecommendations(req.query.access_token, req.query.market, Number(req.query.limit) * 10, req.query.genre)
 
-    // use the access token to access the Spotify Web API
-    request.get(listOptions, function(error, response, body) {
-      res.send(body);
-    });
+  // use the access token to access the Spotify Web API
+  request.get(listOptions, function (error, response, body) {
+    error ? res.send(error) : '';
+    const tracks = filterTracksByPreviewAndLength(response.body.tracks, req.query.limit);
+    let updatedTracks = [];
+    // Continues running even if one map function fails
+
+    const reqList = tracks.map((i) => {
+      const otherOptions = getRecommendations(req.query.access_token, req.query.market, Number(req.query.limit) * 3, null, i.id);
+      return new Promise(async function(response, rej) {
+        request.get(otherOptions, (error, altResponse, body) => { response(altResponse.body) })
+      });
+    })
+    Promise.all(reqList).then(recommendationsForEachTrack => {
+      console.log('before main return');
+      const filteredRecommendations = recommendationsForEachTrack.map(recObject => ({ seed: recObject.seeds[0], tracks: filterTracksByPreviewAndLength(recObject.tracks, 3) }));
+      filteredRecommendations.forEach(recommendation => {
+        console.log(recommendation)
+        let newTrack = getTrackById(tracks, recommendation.seed.id);
+        newTrack['alts'] = recommendation.tracks;
+        updatedTracks.push(newTrack);
+      })
+      res.send(updatedTracks);
+    })
+  })
 })
-
 
  app.get('/callback', function(req, res) {
  
