@@ -76,7 +76,15 @@
             ));
         }
      });
-  }
+}
+  
+app.get('/save_playlist', function (res, req) {
+  // create playlist
+
+  // add items to a Playlist
+
+  // return link to the playlist or name
+})
  
  app.get('/get_random_track', function(req, res) {
    trackRequest(req, res);
@@ -120,10 +128,24 @@ const getRecommendations = (access_token, market, limit = 3, genre, track) => {
     });
  })
 
+ app.get('/recommendation-genres', function(req, res) {
+  // https://api.spotify.com/v1/recommendations
+  var options = {
+    url: `https://api.spotify.com/v1/recommendations/available-genre-seeds`,
+    headers: { 'Authorization': 'Bearer ' + req.query.access_token },
+    json: true
+  };
+
+   // use the access token to access the Spotify Web API
+   request.get(options, function(error, response, body) {
+     res.send(response.body);
+   });
+})
+
 const getTrackById = (tracks, id) => {
   const index = tracks.map(i => i.id).indexOf(id);
   return tracks[index];
- }
+}
  
 const filterTracksByPreviewAndLength = (tracks, limit) => {
   return tracks.filter(i => i.preview_url && i.preview_url.indexOf('/p.scdn.co/') > -1).slice(0, limit).map(i => {
@@ -135,10 +157,9 @@ const filterTracksByPreviewAndLength = (tracks, limit) => {
 app.get('/get-the-tape', function (req, res) {
   // https://api.spotify.com/v1/recommendations
   const listOptions = getRecommendations(req.query.access_token, req.query.market, Number(req.query.limit) * 10, req.query.genre)
-
-  // use the access token to access the Spotify Web API
   request.get(listOptions, function (error, response, body) {
     error ? res.send(error) : '';
+    
     const tracks = filterTracksByPreviewAndLength(response.body.tracks, req.query.limit);
     let updatedTracks = [];
     // Continues running even if one map function fails
