@@ -96,7 +96,7 @@ app.get('/save_playlist', function (res, req) {
    res.cookie(stateKey, state);
  
    // your application requests authorization
-   var scope = 'user-read-private user-read-email streaming';
+   var scope = 'user-read-private user-read-email streaming playlist-modify-public playlist-modify-private';
    res.redirect('https://accounts.spotify.com/authorize?' +
      querystring.stringify({
        response_type: 'code',
@@ -174,7 +174,6 @@ app.get('/get-the-tape', function (req, res) {
       console.log('before main return');
       const filteredRecommendations = recommendationsForEachTrack.map(recObject => ({ seed: recObject.seeds[0], tracks: filterTracksByPreviewAndLength(recObject.tracks, 3) }));
       filteredRecommendations.forEach(recommendation => {
-        console.log(recommendation)
         let newTrack = getTrackById(tracks, recommendation.seed.id);
         newTrack['alts'] = recommendation.tracks;
         updatedTracks.push(newTrack);
@@ -246,8 +245,58 @@ app.get('/get-the-tape', function (req, res) {
    }
  });
  
+app.get('/create-play-list', function (req, res) {
+    var reqOptions = {
+      url: `https://api.spotify.com/v1/users/${req.query.userId}/playlists`,
+      form: req.query.data,
+      headers: { 'Authorization': `Bearer ${req.query.access_token}` },
+      json: true
+    };
+    console.log(req.query.data)
+    request.post(reqOptions, function (error, response, body) {
+      res.send(response || error);
+    })
+})
+
+app.get('/update-play-list', function (req, res) {
+  var reqOptions = {
+    url: `https://api.spotify.com/v1/playlists/${req.query.playlist_id}/tracks`,
+    form: JSON.stringify([ ...req.query.urisList ]),
+    headers: { 'Authorization': `Bearer ${req.query.access_token}` },
+    json: true
+  };
+  console.log('update-play-list ' + req.query.playlist_id)
+  console.log([ ...req.query.urisList ])
+
+  request.post(reqOptions, function (error, response, body) {
+    res.send(response || error);
+  })
+})
+
+app.get('/get-play-list-list', function (req, res) {
+  // add multiple list pages 
+  var reqOptions = {
+    url: `https://api.spotify.com/v1/me/playlists?limit=100`,
+    headers: { 'Authorization': `Bearer ${req.query.access_token}` },
+    json: true
+  };
+  request.get(reqOptions, function (error, response, body) {
+    res.send(response || error);
+  })
+})
+
+app.get('/get-play-list', function (req, res) {
+  var reqOptions = {
+    url: `https://api.spotify.com/v1/playlists/{playlist_id}`,
+    headers: { 'Authorization': `Bearer ${req.query.access_token}` },
+    json: true
+  };
+  request.get(reqOptions, function (error, response, body) {
+    res.send(response || error);
+  })
+})
+
  app.get('/refresh_token', function(req, res) {
-    console.log('refresh_token', req.query.refresh_token);
    // requesting access token from refresh token
    var refresh_token = req.query.refresh_token;
    var authOptions = {
