@@ -107,10 +107,9 @@ app.get('/save_playlist', function (res, req) {
      }));
  });
 
-const getRecommendations = (access_token, market, limit = 3, genre, track) => {
+const getRecommendations = (access_token, market, limit = 3, genreSeeds, track) => {
   const trackQuery = track ? `&seed_tracks=${track}` : '';
-  const genreQuery = genre ? `&seed_genres=${genre}` : '';
-
+  const genreQuery = genreSeeds ? `&seed_genres=${genreSeeds}` : '';
   return {
     url: `https://api.spotify.com/v1/recommendations?market=${market}&limit=${limit}${trackQuery}${genreQuery}`,
     headers: { 'Authorization': 'Bearer ' + access_token },
@@ -156,10 +155,11 @@ const filterTracksByPreviewAndLength = (tracks, limit) => {
 
 app.get('/get-the-tape', function (req, res) {
   // https://api.spotify.com/v1/recommendations
-  const listOptions = getRecommendations(req.query.access_token, req.query.market, Number(req.query.limit) * 10, req.query.genre)
+  const listOptions = getRecommendations(req.query.access_token, req.query.market, Number(req.query.limit) * 10, req.query.genreSeeds)
   request.get(listOptions, function (error, response, body) {
     error ? res.send(error) : '';
-    
+    response.body.tracks ? '' : res.send({ response, body });
+
     const tracks = filterTracksByPreviewAndLength(response.body.tracks, req.query.limit);
     let updatedTracks = [];
     // Continues running even if one map function fails
@@ -274,7 +274,7 @@ app.get('/get-the-tape', function (req, res) {
    });
  });
  // Handles any requests that don't match the ones above
-app.get('*', (req,res) =>{
+app.get('*', (req,res) => {
   res.sendFile(path.join(__dirname+'/public/index.html'));
 });
 
