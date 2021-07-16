@@ -19,23 +19,11 @@
  var client_secret = '0a80a1e2e1724f68b703184c2388000c'; // Your secret
  var redirect_uri = 'http://127.0.0.1:8888/callback'; // Your redirect uri
  
-  var utils = require('./utils');
+var utils = require('./utils');
+var tracks = require('./routes/tracks');
+var user = require('./routes/user');
+var getTheTape = require('./routes/get-the-tape');
 
- /**
-  * Generates a random string containing numbers and letters
-  * @param  {number} length The length of the string
-  * @return {string} The generated string
-  */
- var generateRandomString = function(length) {
-   var text = '';
-   var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
- 
-   for (var i = 0; i < length; i++) {
-     text += possible.charAt(Math.floor(Math.random() * possible.length));
-   }
-   return text;
- };
- 
  var stateKey = 'spotify_auth_state';
  
  var app = express();
@@ -43,43 +31,7 @@
  app.use(express.static(__dirname + '/public'))
     .use(cors())
     .use(cookieParser());
-
-  function trackRequest (req, res) {
-    var reFetchCounter = 0;
-    var access_token = req.query.access_token;
-    var {market, offset, q} = req.query;
-  
-    var reqOptions = {
-       url: `https://api.spotify.com/v1/search?q=${q ? q : generateRandomString(1)}&type=track&market=${market}&limit=1&offset=${offset}`,
-       headers: { 'Authorization': `Bearer ${access_token}` },
-       json: true
-    };
-
-    return request.get(reqOptions, function(error, response, body) {
-      console.log('error', error)
-        if (!error && response.statusCode === 200) {
-          // console.log('response.body.tracks.items[0]', response.body.tracks.items[0]);
-          if (!response.body.tracks.items[0].preview_url && reFetchCounter < 4) {
-            console.log('no preview: ' + reFetchCounter);
-            reFetchCounter++;
-            setTimeout(trackRequest, 1000, req, res);
-          } else {
-            console.log('YES preview: ' + reFetchCounter);
-            reFetchCounter = 0;
-            res.send(JSON.stringify(
-              response
-            ));
-          }
-        } else {
-          reFetchCounter = 0;
-          res.send('/error' +
-            JSON.stringify(
-              response
-            ));
-        }
-     });
-}
-  
+ 
 app.get('/save_playlist', function (res, req) {
   // create playlist
 
@@ -88,95 +40,15 @@ app.get('/save_playlist', function (res, req) {
   // return link to the playlist or name
 })
  
- app.get('/get_random_track', function(req, res) {
-   trackRequest(req, res);
- });
+app.get('/login', user.login);
 
- app.get('/login', function(req, res) {
+ app.get('/get_random_track', tracks.trackRequest);
  
-   var state = generateRandomString(16);
-   res.cookie(stateKey, state);
- 
-   // your application requests authorization
-   var scope = 'user-read-private user-read-email streaming playlist-modify-public playlist-modify-private';
-   res.redirect('https://accounts.spotify.com/authorize?' +
-     querystring.stringify({
-       response_type: 'code',
-       client_id: client_id,
-       scope: scope,
-       redirect_uri: redirect_uri,
-       state: state
-     }));
- });
+app.get('/recommendations', tracks.getRecommendations);
 
- 
- app.get('/recommendations', function(req, res) {
-   // https://api.spotify.com/v1/recommendations
-   var options = utils.getRecommendations(req.query.access_token, req.query.limit, req.query.market, req.query.seed_genres, req.query.id)
+ app.get('/recommendation-genres', tracks.getRecommendationGenres)
 
-    // use the access token to access the Spotify Web API
-    request.get(options, function(error, response, body) {
-      res.send(body);
-    });
- })
-
- app.get('/recommendation-genres', function(req, res) {
-  // https://api.spotify.com/v1/recommendations
-  var options = {
-    url: `https://api.spotify.com/v1/recommendations/available-genre-seeds`,
-    headers: { 'Authorization': 'Bearer ' + req.query.access_token },
-    json: true
-  };
-
-   // use the access token to access the Spotify Web API
-   request.get(options, function(error, response, body) {
-     res.send(response.body);
-   });
-})
-
-const getTrackById = (tracks, id) => {
-  const index = tracks.map(i => i.id).indexOf(id);
-  return tracks[index];
-}
- 
-const filterTracksByPreviewAndLength = (tracks, limit) => {
-  return tracks.filter(i => i.preview_url && i.preview_url.indexOf('/p.scdn.co/') > -1).slice(0, limit).map(i => {
-    i['answers'] = [];
-    return i;
-  });
-}
-
-app.get('/get-the-tape', function (req, res) {
-  // https://api.spotify.com/v1/recommendations
-  const settings = JSON.parse(req.query.settings);
-
-  const listOptions = utils.getRecommendations(req.query.access_token, Number(settings.limit) * 10, settings.market, settings.seed_genres)
-  request.get(listOptions, function (error, response, body) {
-    error ? res.send(error) : '';
-    response.body.tracks ? '' : res.send({ response, body });
-
-    const tracks = filterTracksByPreviewAndLength(response.body.tracks, settings.limit);
-    let updatedTracks = [];
-    // Continues running even if one map function fails
-
-    const reqList = tracks.map((i) => {
-      const otherOptions = utils.getRecommendations(req.query.access_token, Number(settings.limit) * 3, settings.market, null, i.id);
-      return new Promise(async function(response, rej) {
-        request.get(otherOptions, (error, altResponse, body) => { response(altResponse.body) })
-      });
-    })
-    Promise.all(reqList).then(recommendationsForEachTrack => {
-      console.log('before main return');
-      const filteredRecommendations = recommendationsForEachTrack.map(recObject => ({ seed: recObject.seeds[0], tracks: filterTracksByPreviewAndLength(recObject.tracks, 3) }));
-      filteredRecommendations.forEach(recommendation => {
-        let newTrack = getTrackById(tracks, recommendation.seed.id);
-        newTrack['alts'] = recommendation.tracks;
-        updatedTracks.push(newTrack);
-      })
-      res.send(updatedTracks);
-    })
-  })
-})
+app.get('/get-the-tape', getTheTape.mane)
 
  app.get('/callback', function(req, res) {
  
@@ -317,8 +189,9 @@ app.get('/get-play-list', function (req, res) {
      }
    });
  });
- // Handles any requests that don't match the ones above
-app.get('*', (req,res) => {
+
+// Handles any requests that don't match the ones above
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname+'/public/index.html'));
 });
 
