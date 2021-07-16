@@ -19,6 +19,8 @@
  var client_secret = '0a80a1e2e1724f68b703184c2388000c'; // Your secret
  var redirect_uri = 'http://127.0.0.1:8888/callback'; // Your redirect uri
  
+  var utils = require('./utils');
+
  /**
   * Generates a random string containing numbers and letters
   * @param  {number} length The length of the string
@@ -107,19 +109,10 @@ app.get('/save_playlist', function (res, req) {
      }));
  });
 
-const getRecommendations = (access_token, market, limit = 3, genreSeeds, track) => {
-  const trackQuery = track ? `&seed_tracks=${track}` : '';
-  const genreQuery = genreSeeds ? `&seed_genres=${genreSeeds}` : '';
-  return {
-    url: `https://api.spotify.com/v1/recommendations?market=${market}&limit=${limit}${trackQuery}${genreQuery}`,
-    headers: { 'Authorization': 'Bearer ' + access_token },
-    json: true
-  };
- }
  
  app.get('/recommendations', function(req, res) {
    // https://api.spotify.com/v1/recommendations
-   var options = getRecommendations(req.query.access_token, req.query.market, req.query.limit, req.query.genre, req.query.id)
+   var options = utils.getRecommendations(req.query.access_token, req.query.limit, req.query.market, req.query.seed_genres, req.query.id)
 
     // use the access token to access the Spotify Web API
     request.get(options, function(error, response, body) {
@@ -155,17 +148,19 @@ const filterTracksByPreviewAndLength = (tracks, limit) => {
 
 app.get('/get-the-tape', function (req, res) {
   // https://api.spotify.com/v1/recommendations
-  const listOptions = getRecommendations(req.query.access_token, req.query.market, Number(req.query.limit) * 10, req.query.genreSeeds)
+  const settings = JSON.parse(req.query.settings);
+
+  const listOptions = utils.getRecommendations(req.query.access_token, Number(settings.limit) * 10, settings.market, settings.seed_genres)
   request.get(listOptions, function (error, response, body) {
     error ? res.send(error) : '';
     response.body.tracks ? '' : res.send({ response, body });
 
-    const tracks = filterTracksByPreviewAndLength(response.body.tracks, req.query.limit);
+    const tracks = filterTracksByPreviewAndLength(response.body.tracks, settings.limit);
     let updatedTracks = [];
     // Continues running even if one map function fails
 
     const reqList = tracks.map((i) => {
-      const otherOptions = getRecommendations(req.query.access_token, req.query.market, Number(req.query.limit) * 3, null, i.id);
+      const otherOptions = utils.getRecommendations(req.query.access_token, Number(settings.limit) * 3, settings.market, null, i.id);
       return new Promise(async function(response, rej) {
         request.get(otherOptions, (error, altResponse, body) => { response(altResponse.body) })
       });
