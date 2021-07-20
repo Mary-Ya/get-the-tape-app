@@ -47,8 +47,15 @@ module.exports = {
   trackRequest,
   getRecommendations: (req, res) => {
     // https://api.spotify.com/v1/recommendations
-    var options = utils.getRecommendations(req.query.access_token, req.query.limit, req.query.market, req.query.seed_genres, req.query.id)
-
+    const {access_token, limit, market, seed_genres, id, min_tempo, max_tempo } = req.query;
+    var options = utils.getRecommendations(access_token,
+      limit,
+      market,
+      seed_genres,
+      id,
+      { min_tempo, max_tempo }
+    );
+    console.log('options ' + options.url);
     // use the access token to access the Spotify Web API
     request.get(options, function (error, response, body) {
       res.send(body);

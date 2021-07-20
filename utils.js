@@ -1,27 +1,27 @@
 const makeRecQuery = (settings) => {
-    let otherQueries = '';
+    let q = '';
         if (settings) {
             for (key in settings) {
-                console.log(`key: ' + ${key}; settings[key]: ${settings[key]}`);
                 const option = settings[key];
                 if (option) {
-                    otherQueries += `&${key}=${option}`;
+                    q += `&${key}=${option}`;
                 }
             }
     }
     
-    return otherQueries;
+    return q;
 }
 
 
 module.exports = {
-    getRecommendations: (access_token, limit = 3, market, genreSeeds, track, otherSettings) => {
+    getRecommendations: (access_token, limit = 3, track, otherSettings) => {
         const trackQuery = track ? `&seed_tracks=${track}` : '';
-        const genreQuery = genreSeeds ? `&seed_genres=${genreSeeds}` : '';
+        //const genreQuery = genreSeeds ? `&seed_genres=${genreSeeds}` : '';
         const otherQueries = makeRecQuery(otherSettings);
 
         return {
-            url: `https://api.spotify.com/v1/recommendations?market=${market}&limit=${limit}${trackQuery}${genreQuery}${otherQueries}`,
+            // url: `https://api.spotify.com/v1/recommendations?market=${market}&limit=${limit}${trackQuery}${genreQuery}${otherQueries}`,
+            url: `https://api.spotify.com/v1/recommendations?limit=${limit}${otherQueries}${trackQuery}`,
             headers: { 'Authorization': 'Bearer ' + access_token },
             json: true
         };
