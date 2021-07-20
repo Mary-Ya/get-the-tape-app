@@ -5,8 +5,20 @@ module.exports = {
     mane: (req, res) => {
         // https://api.spotify.com/v1/recommendations
         const settings = JSON.parse(req.query.settings);
-  
-        const listOptions = utils.getRecommendations(req.query.access_token, Number(settings.limit) * 10, settings.market, settings.seed_genres)
+        const {limit, market, seed_genres, id, min_tempo, max_tempo } = settings;
+        const listOptions = utils.getRecommendations(req.query.access_token,
+            Number(limit) * 10,
+            market,
+            seed_genres,
+            null,
+            { min_tempo, max_tempo }
+        );
+        console.log('options ' + listOptions.url);
+        /**
+         *  const {access_token, limit, market, seed_genres, id, min_tempo, max_tempo } = req.query;
+            var options = utils.getRecommendations(access_token, limit, market, seed_genres, id, {min_tempo, max_tempo});
+            console.log('options ' + options.url);
+         */
         request.get(listOptions, function (error, response, body) {
             const errors = error || response.body.error;
             if (errors) {
