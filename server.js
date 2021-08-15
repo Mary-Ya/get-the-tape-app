@@ -29,6 +29,7 @@ app.get('/login', user.login);
 app.get('/refresh_token', user.refreshToken);
 
 app.get('/get_random_track', tracks.trackRequest);
+app.get('/search', tracks.searchRequest);
 app.get('/recommendations', tracks.getRecommendations);
 app.get('/recommendation-genres', tracks.getRecommendationGenres)
 
