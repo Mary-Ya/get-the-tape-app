@@ -5,12 +5,23 @@ module.exports = {
     mane: (req, res) => {
         // https://api.spotify.com/v1/recommendations
         const settings = JSON.parse(req.query.settings);
-        const {limit, market, seed_genres, min_tempo, max_tempo } = settings;
-        const listOptions = utils.getRecommendations(req.query.access_token,
-            Number(req.query.limit) * 10,
+        const limit = req.query.limit;
+        const {market, seed_genres, min_tempo, max_tempo } = settings;
+        /* const listOptions = utils.getRecommendations(req.query.access_token,
+            Number(limit) * 10,
             null,
             Object.assign(settings)
-        );
+        ); */
+        
+        // TODO: refactor after no more api changes
+        const listOptions = {
+            // url: `https://api.spotify.com/v1/recommendations?market=${market}&limit=${limit}${trackQuery}${genreQuery}${otherQueries}`,
+
+            // Spotify requires params in particular order now and to have all seed_artists, seed_genres, seed_tracks in request
+            url: `https://api.spotify.com/v1/recommendations?limit=${limit*10}&seed_artists=${settings.seed_artists}&seed_genres=${settings.seed_genres}&seed_tracks=${settings.seed_tracks}`,
+            headers: { 'Authorization': 'Bearer ' + req.query.access_token },
+            json: true
+        };
 
         request.get(listOptions, function (error, response, body) {
             const errors = error || response.body.error;
