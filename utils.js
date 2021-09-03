@@ -60,8 +60,9 @@ const sortOptionalParamsForAPI = (data) => {
 
     for (key in data) {
         const option = data[key];
+        console.log(option + ' - ' +  data[key])
         if (option) {
-            arrayInOrder[optionalParamsOrder[key]] = `&${option}=${data[key]}`;
+            arrayInOrder[optionalParamsOrder[key]] = `&${key}=${data[key]}`;
         }
     }
 

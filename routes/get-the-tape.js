@@ -6,7 +6,8 @@ module.exports = {
         // https://api.spotify.com/v1/recommendations
         const settings = JSON.parse(req.query.settings);
         const limit = req.query.limit;
-        const optionalSettings = utils.makeRecQuery(settings.optional)
+        const optionalSettings = utils.sortOptionalParamsForAPI(settings.optional);
+        console.log(optionalSettings)
         // TODO: refactor after no more api changes
         const listOptions = {
             // Spotify requires params in particular order now and to have all seed_artists, seed_genres, seed_tracks in request
@@ -14,11 +15,11 @@ module.exports = {
                 `&seed_artists=${settings.seed_artists}` +
                 `&seed_genres=${settings.seed_genres}` +
                 `&seed_tracks=${settings.seed_tracks}` + 
-                `${utils.sortOptionalParamsForAPI(optionalSettings)}`,
+                `${optionalSettings}`,
             headers: { 'Authorization': 'Bearer ' + req.query.access_token },
             json: true
         };
-
+        console.log(listOptions.url)
         request.get(listOptions, function (error, response, body) {
             const errors = error || response.body.error;
             if (errors) {
