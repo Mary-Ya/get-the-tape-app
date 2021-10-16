@@ -70,13 +70,17 @@ module.exports = {
   searchRequest,
   getRecommendations: (req, res) => {
     // https://api.spotify.com/v1/recommendations
-    const {access_token, limit, market, seed_genres, id, min_tempo, max_tempo } = req.query;
+    const { access_token, limit, market,
+      seed_genres, seed_tracks, seed_artists,
+      id, min_tempo, max_tempo } = req.query;
     var options = utils.getRecommendations(access_token,
       limit,
       market,
       seed_genres,
+      seed_tracks,
+      seed_artists,
       id,
-      { min_tempo, max_tempo, seed_tracks, year: '1980' }
+      { min_tempo, max_tempo, seed_tracks }
     );
     console.log('options ' + options.url);
     // use the access token to access the Spotify Web API
