@@ -50,7 +50,6 @@ app.get('/save_playlist', function (res, req) {
 app.get('/reject', function (req, res) {
   console.log(JSON.stringify(req.query));
   res.status(401).send(req.query.error);
-  //res.send(req.query.error);
 });
 
 // Handles any requests that don't match the ones above
