@@ -1,0 +1,30 @@
+{
+  "name": "get-the-tape-app",
+  "version": "0.7.1",
+  "description": "Spotify Playlist generator",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mary-Ya/constable.git"
+  },
+  "author": "Mary",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/Mary-Ya/constable/issues"
+  },
+  "homepage": "https://github.com/Mary-Ya/constable#readme",
+  "dependencies": {
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "querystring": "^0.2.1",
+    "request": "^2.88.2"
+  },
+  "devDependencies": {
+    "@types/react": "^17.0.3"
+  }
+}
