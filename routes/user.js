@@ -1,7 +1,7 @@
 const utils = require('../utils');
 const request = require('request'); // "Request" library
 const querystring = require('querystring');
-const { client_id, client_secret } = require("./secret");
+const { client_id, client_secret } = {$CLIENT_ID, $CLIENT_SECRET}
 const stateKey = 'spotify_auth_state';
 
 const redirect_uri = 'http://127.0.0.1:8888/callback'; // Your redirect uri
