@@ -5,7 +5,7 @@ const client_id = process.env.CLIENT_ID;
 const client_secret = process.env.CLIENT_SECRET;
 const stateKey = 'spotify_auth_state';
 
-const redirect_uri = 'http://127.0.0.1:8888/callback'; // Your redirect uri
+const redirect_uri = `${process.env.APP_URL}/callback`; // Your redirect uri
 
 module.exports = {
   auth: function (req, res) {
