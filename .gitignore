@@ -4,3 +4,4 @@ node_modules
 front
 routes/secret.js
 /vscode
+.env
