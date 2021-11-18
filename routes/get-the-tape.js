@@ -19,7 +19,7 @@ module.exports = {
             headers: { 'Authorization': 'Bearer ' + req.query.access_token },
             json: true
         };
-        console.log(listOptions.url)
+
         request.get(listOptions, function (error, response, body) {
             const errors = error || response.body.error;
             if (errors) {
